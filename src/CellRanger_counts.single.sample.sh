@@ -13,10 +13,11 @@
 
 module purge
 
-File=$/mnt/home/gomezcan/Projects/SingleCell/RawData/
+File=/mnt/home/gomezcan/Projects/SingleCell/RawData
 
 cellranger count --id=$1 \
-	--transcriptome=/mnt/home/gomezcan/Projects/SingleCell/Genomes/Index_TAIR11_CellRange/ \
-	--fastqs=$File/$1 \
-	--sample=Sample_$1 \
-	--localcores=20 --localmem=100
+        --transcriptome=/mnt/home/gomezcan/Projects/SingleCell/Genomes/Index_TAIR11_CellRange/ \
+        --fastqs=$File/$1/ \
+        --sample=$1 \
+	--include-introns
+        --localcores=20 --localmem=100
