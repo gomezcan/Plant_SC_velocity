@@ -12,6 +12,10 @@
 module purge
 ml GCCcore/8.2.0 parallel-fastq-dump/0.6.5-Python-3.7.2
 
+### $1 tab limited file, Example:
+#SRR12046122    Paired
+#SRR12046123    Paired
+#SRR12046124    Paired
 
 while read -r -a line; do
         if [[ ${line[1]} == "Single" ]];  then
