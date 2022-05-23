@@ -9,8 +9,14 @@
 #### gtf filtering (only protein-related regions):
 
 ```
-- 1. cat Araport11_GTF_genes_transposons.May2022.gtf | grep -v 'ChrC' | grep -v 'ChrM' > TAIR11_GTF_No_C_M.May2022.gtf
-- 2. cellranger mkgtf TAIR11_GTF_No_C_M.May2022.gtf TAIR11_protein_filtered.gtf  --attribute=gene_biotype:protein
+# tem file to match chr nomemclature
+cat Araport11_GTF_genes_transposons.May2022.gtf | sed 's/Chr/chr/g' | sed 's/chrC/chrP/g' > chrTAIR11.May2022.gtf
+
+# filter redundant coordenates 
+cellranger mkgtf chrTAIR11.May2022.gtf TAIR11_protein_filtered.gtf  --attribute=gene_biotype:protein
+
+# Create cellranger genome index
+cellranger mkref --genome=Index_TAIR11_CellRange --fasta=TAIR10.1_genomic.fna --genes=TAIR11_protein_filtered.gtf
 
 ```
 
