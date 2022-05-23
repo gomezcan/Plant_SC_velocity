@@ -8,16 +8,25 @@
 #SBATCH --job-name CR_count 	    # You can give your job a name for easier identification (same as -J)
 
 
-########## Load Modules #########
-
-
+#########################################
+########## 	Load Modules 	#########
 module purge
+#########################################
 
-File=/mnt/home/gomezcan/Projects/SingleCell/RawData
+# Genome index
+Index_TAIR11_CellRange=/mnt/home/gomezcan/Projects/SingleCell/Genomes/Index_TAIR11_CellRange/
 
-cellranger count --id=$1 \
-        --transcriptome=/mnt/home/gomezcan/Projects/SingleCell/Genomes/Index_TAIR11_CellRange/ \
-        --fastqs=$File/$1/ \
-        --sample=$1 \
+# Sample to run
+Sample=$1
+
+# require: fastq files on sample_diratory ($Sample)
+Sample_dir=$Sample/
+
+cellranger count --id=Count_$Sample 
+	--transcriptome=Index_TAIR11_CellRange/ \
+        --fastqs=$Sample_dir \
+	--sample=$Sample \
+        --localcores=100 \
+	--localmem=100 \
 	--include-introns
-        --localcores=20 --localmem=100
+	
