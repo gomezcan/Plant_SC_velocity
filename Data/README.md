@@ -19,7 +19,10 @@ cellranger mkgtf chrTAIR11.May2022.gtf TAIR11_protein_filtered.gtf  --attribute=
 cellranger mkref --genome=Index_TAIR11_CellRange --fasta=TAIR10.1_genomic.fna --genes=TAIR11_protein_filtered.gtf
 
 # STAR genome index
-STAR --runThreadN 100 --runMode genomeGenerate --genomeDir ./Index_TAIR11_STAR --genomeFastaFiles TAIR10.1_genomic.fna --sjdbGTFfile TAIR11_protein_filtered.gtf --sjdbOverhang 91
+STAR --runThreadN 100 --runMode genomeGenerate --genomeDir ./Index_TAIR11_STAR --genomeFastaFiles TAIR10.1_genomic.fna \
+      --sjdbGTFfile TAIR11_protein_filtered.gtf \
+       --sjdbOverhang 91 \
+       --genomeSAindexNbases 12
 
 ```
 
