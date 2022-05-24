@@ -15,8 +15,11 @@ cat Araport11_GTF_genes_transposons.May2022.gtf | sed 's/Chr/chr/g' | sed 's/chr
 # filter redundant coordenates 
 cellranger mkgtf chrTAIR11.May2022.gtf TAIR11_protein_filtered.gtf  --attribute=gene_biotype:protein
 
-# Create cellranger genome index
+# Cellranger genome index
 cellranger mkref --genome=Index_TAIR11_CellRange --fasta=TAIR10.1_genomic.fna --genes=TAIR11_protein_filtered.gtf
+
+# STAR genome index
+STAR --runThreadN 100 --runMode genomeGenerate --genomeDir ./Index_TAIR11_STAR --genomeFastaFiles TAIR10.1_genomic.fna --sjdbGTFfile TAIR11_protein_filtered.gtf --sjdbOverhang 91
 
 ```
 
