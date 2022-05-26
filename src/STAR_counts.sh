@@ -93,7 +93,7 @@ while read -r -a line; do
         ## Ask if the sample class
 	if [[ ${line[1]} == "v3" ]]; then 
 	        START_v3 $Input
-	elif [[ ${line[1]} == "Paired" ]]; then
+	elif [[ ${line[1]} == "v2" ]]; then
                 START_v2 $Input
         else
                 echo " .. Sample class missing .. ${line[0]}"
