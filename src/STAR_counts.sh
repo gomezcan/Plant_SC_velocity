@@ -20,20 +20,15 @@ ml GCC/10.3.0 STAR/2.7.9a
 ## soloUMIfiltering: MultiGeneUMI_CR, basic + remove lower-count UMIs that map to more than one gene,
 ##                   matching CellRanger > 3.0.0 . Only works with --soloUMIdedup 1MM_CR. 
 
-# Input file: list of Samples and version class:
-## SRR12046124     v3
-## SRR12046067     v2
-
-List_samples=$1
-
-
 
 START_v2() {
         ## process 10x chemistry v2 of 3' 10x
         
-        ## Files input ($1): File R1, eg: SRR12046049_S1_L001_R1_001.fastq.gz
-        File1=$1; 
-        File2=${1//_R1_/_R2_};
+        ## Files input ($1): File name, 
+        Input=$1; 
+	
+	File1=${Input}_S1_L001_R1_001.fastq.gz #  add missing part of file name
+        File2=${Input}_S1_L001_R2_001.fastq.gz #  add missing part of file name
 
         name=$(echo $i | tr '_' '\t' | cut -f1); # set sample name
         
@@ -41,13 +36,12 @@ START_v2() {
         STAR --soloType Droplet --runThreadN 100 \
                                 --soloCBwhitelist 3M-february-2018.txt \
                                 --genomeDir Index_TAIR11_STAR \
-                                --readFilesIn $File2 $File1 --outFileNamePrefix ${name}_star. \
+                                --readFilesIn $File2 $File1 --outFileNamePrefix ${Input}_star. \
                                 --outSAMtype BAM Unsorted --soloOutFileNames Counts_ --readFilesCommand gunzip -c \
                                 --soloUMIdedup 1MM_CR \
                                 --soloCBmatchWLtype 1MM_multi_Nbase_pseudocounts \
                                 --soloUMIfiltering MultiGeneUMI_CR \
                                 --clipAdapterType CellRanger4 \
-                                --soloUMIdedup 1MM_CR \
                                 --soloFeatures Gene GeneFull Velocyto \
                                 --outFilterScoreMin 30 \
                                 --soloCBstart 1 \
@@ -60,9 +54,11 @@ START_v2() {
 START_v3() {
         ## process 10x chemistry v3 of 3' 10x
         
-        ## Files input ($1): File R1, eg: SRR12046049_S1_L001_R1_001.fastq.gz
-        File1=$1; 
-        File2=${1//_R1_/_R2_};
+        ## Files input ($1): File name, 
+        Input=$1; 
+	
+	File1=${Input}_S1_L001_R1_001.fastq.gz #  add missing part of file name
+        File2=${Input}_S1_L001_R2_001.fastq.gz #  add missing part of file name
 
         name=$(echo $i | tr '_' '\t' | cut -f1); # set sample name
         
@@ -70,13 +66,12 @@ START_v3() {
         STAR --soloType Droplet --runThreadN 100 \
                                 --soloCBwhitelist 3M-february-2018.txt \
                                 --genomeDir Index_TAIR11_STAR \
-                                --readFilesIn $File2 $File1 --outFileNamePrefix ${name}_star. \
+                                --readFilesIn $File2 $File1 --outFileNamePrefix ${Input}_star. \
                                 --outSAMtype BAM Unsorted --soloOutFileNames Counts_ --readFilesCommand gunzip -c \
                                 --soloUMIdedup 1MM_CR \
                                 --soloCBmatchWLtype 1MM_multi_Nbase_pseudocounts \
                                 --soloUMIfiltering MultiGeneUMI_CR \
                                 --clipAdapterType CellRanger4 \
-                                --soloUMIdedup 1MM_CR \
                                 --soloFeatures Gene GeneFull Velocyto \
                                 --outFilterScoreMin 30 \
                                 --soloCBstart 1 \
@@ -87,10 +82,15 @@ START_v3() {
 
 }
 
+# Input file: list of Samples and version class:
+## SRR12046124     v3
+## SRR12046067     v2
+
+List_samples=$1
 
 while read -r -a line; do
 
-	Input=${line[0]}_S1_L001_R1_001.fastq.gz #  add missing part of file name
+	Input=${line[0]}
         
         ## Ask if the sample class
 	if [[ ${line[1]} == "v3" ]]; then 
