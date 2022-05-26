@@ -14,7 +14,7 @@ ml GCC/10.3.0 STAR/2.7.9a
 ################################
 
 START_v2() {
-        ## process 10x chemistry v3 of 3' 10x
+        ## process 10x chemistry v2 of 3' 10x
         
         ## Files input: file R1, eg: SRR12046049_S1_L001_R1_001.fastq.gz
         File1=$1; 
@@ -36,14 +36,26 @@ START_v2() {
 }
 
 START_v3() {
-        # SRR12046049_S1_L001_R1_001.fastq.gz
-        File1=$i;
+        ## process 10x chemistry v3 of 3' 10x
+        
+                ## Files input: file R1, eg: SRR12046049_S1_L001_R1_001.fastq.gz
+        File1=$1; 
         File2=${i//_R1_/_R2_};
 
-        name=$(echo $i | tr '_' '\t' | cut -f1);
-        STAR --soloType Droplet --runThreadN 100 --soloCBwhitelist 3M-february-2018.txt.gz \
-                                --genomeDir ../Index_TAIR11_STAR --readFilesIn $File2 $File1 --outFileNamePrefix ${name}_star \
-                                --outSAMtype BAM --soloUMIlen 12 --soloOutFileNames StarCounts_${name}
+        name=$(echo $i | tr '_' '\t' | cut -f1); # set sample name
+        
+        # mapping
+        STAR --soloType Droplet --runThreadN 60 \
+                                --soloCBwhitelist 737K-august-2016.txt \
+                                --genomeDir Index_TAIR11_STAR \
+                                --readFilesIn $File2 $File1 --outFileNamePrefix ${name}_star. \
+                                --outSAMtype BAM Unsorted --soloOutFileNames Counts_${name} --readFilesCommand gunzip -c \
+                                --soloCBstart 1 \
+                                --soloCBlen 16 \
+                                --soloUMIstart 17 \
+                                --soloUMIlen 12
+
+
 }
 
         
