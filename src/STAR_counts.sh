@@ -20,6 +20,13 @@ ml GCC/10.3.0 STAR/2.7.9a
 ## soloUMIfiltering: MultiGeneUMI_CR, basic + remove lower-count UMIs that map to more than one gene,
 ##                   matching CellRanger > 3.0.0 . Only works with --soloUMIdedup 1MM_CR. 
 
+# Input file: list of Samples and version class:
+## SRR12046124     v3
+## SRR12046067     v2
+
+List_samples=$1
+
+
 
 START_v2() {
         ## process 10x chemistry v2 of 3' 10x
@@ -41,8 +48,8 @@ START_v2() {
                                 --soloUMIfiltering MultiGeneUMI_CR \
                                 --clipAdapterType CellRanger4 \
                                 --soloUMIdedup 1MM_CR \
-                                --soloFeatures Gene GeneFull Velocyto
-                                --outFilterScoreMin 30
+                                --soloFeatures Gene GeneFull Velocyto \
+                                --outFilterScoreMin 30 \
                                 --soloCBstart 1 \
                                 --soloCBlen 16 \
                                 --soloUMIstart 17 \
@@ -70,8 +77,8 @@ START_v3() {
                                 --soloUMIfiltering MultiGeneUMI_CR \
                                 --clipAdapterType CellRanger4 \
                                 --soloUMIdedup 1MM_CR \
-                                --soloFeatures Gene GeneFull Velocyto
-                                --outFilterScoreMin 30
+                                --soloFeatures Gene GeneFull Velocyto \
+                                --outFilterScoreMin 30 \
                                 --soloCBstart 1 \
                                 --soloCBlen 16 \
                                 --soloUMIstart 17 \
@@ -80,11 +87,6 @@ START_v3() {
 
 }
 
-# Input file: list of Samples and version class:
-## SRR12046124     v3
-## SRR12046067     v2
-
-List_samples=$1
 
 while read -r -a line; do
 
