@@ -29,8 +29,6 @@ START_v2() {
 	
 	File1=${Input}_S1_L001_R1_001.fastq.gz #  add missing part of file name
         File2=${Input}_S1_L001_R2_001.fastq.gz #  add missing part of file name
-
-        name=$(echo $i | tr '_' '\t' | cut -f1); # set sample name
         
         # mapping
         STAR --soloType Droplet --runThreadN 100 \
@@ -60,8 +58,6 @@ START_v3() {
 	File1=${Input}_S1_L001_R1_001.fastq.gz #  add missing part of file name
         File2=${Input}_S1_L001_R2_001.fastq.gz #  add missing part of file name
 
-        name=$(echo $i | tr '_' '\t' | cut -f1); # set sample name
-        
         # mapping
         STAR --soloType Droplet --runThreadN 100 \
                                 --soloCBwhitelist 3M-february-2018.txt \
