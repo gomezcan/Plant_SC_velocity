@@ -28,3 +28,5 @@ STAR --runThreadN 100 --runMode genomeGenerate --genomeDir ./Index_TAIR11_STAR -
 
 ### Samples: 
 #### Arabidopsis root atlas: GEO GSE152766
+[MetaData_Samples.txt](https://github.com/gomezcan/Plant_SC_velocity/files/8810541/MetaData_Samples.txt)
+
