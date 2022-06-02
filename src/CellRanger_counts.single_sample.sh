@@ -16,17 +16,17 @@ module purge
 # Genome index
 Index_TAIR11_CellRange=/mnt/home/gomezcan/Projects/SingleCell/Genomes/Index_TAIR11_CellRange/
 
-# Sample to run
+# Sample name base
 Sample=$1
 
-# require: fastq files on sample_diratory ($Sample)
-Sample_dir=$Sample/
+# list of directories: multiples run/lanes from the same library
+Sample_dir=$(ls -m -d ${Sample}L* | tr ' ' ',' | sed 's/,,/,/g');
 
-cellranger count --id=Count_$Sample 
-	--transcriptome=Index_TAIR11_CellRange/ \
-        --fastqs=$Sample_dir \
-	--sample=$Sample \
-        --localcores=100 \
-	--localmem=100 \
-	--include-introns
-	
+echo $Sample_dir;
+
+cellranger count --id=Counts_$Sample --transcriptome=$Index_TAIR11_CellRange \
+		--fastqs=$Sample_dir \
+		--sample=$Sample_dir \
+        	--localcores=100 \
+		--localmem=100 \
+		--include-introns true
