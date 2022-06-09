@@ -56,7 +56,7 @@ chop=function(myStr,mySep,myField){
 
 ## load seurat object
 cat("loading seurat object...")
-if(grepl(".RDS$",args$objfile)){sobj=readRDS(args$objfile)}else{load(args$objfile)}
+if(grepl(".RDS$",args$objfile, ignore.case = TRUE)){sobj=readRDS(args$objfile)}else{load(args$objfile)}
 sobj<-subset(sobj,subset=nCount_RNA>=args$minumis)
 ## remove cells with clustersize=1... otherwise won't work with filtering step below
 keep_cells=sobj@meta.data%>%as.data.frame%>%tibble::rownames_to_column("barcode")%>%
