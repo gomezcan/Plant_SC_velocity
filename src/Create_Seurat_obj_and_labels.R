@@ -1,43 +1,78 @@
 ################
 ## LIBRARIES
 ###############
+
 suppressMessages(library(ggplot2))
 suppressMessages(library(dplyr))
 suppressMessages(library(Seurat))
 suppressMessages(library(patchwork))
 library(tibble)
 
-
 args = commandArgs(trailingOnly=TRUE)
 
-cellrange_path = args[1] # path to filtered_feature_bc_matrix 
-SampleName = args[2]     # sample name   
+# list of obj to integrate: after label transferred 
+list_files <-list.files(path='.', pattern = "^matrix")[1:3]
+list_names <- gsub("matrix_", "", list_files)
 
-#cellrange_path = "../4_Velocyto/matrix_10S10/"
-#SampleName ="sc_10S10"
+data.10x = list()
 
-# Load the example cellrange path
-Sample.data <- Read10X(data.dir = cellrange_path)
+#cellrange_path = args[1] # path to filtered_feature_bc_matrix 
+SampleName = args[1]     # sample name  
 
-# Initialize the Seurat object with the raw (non-normalized data).
-Sample <- CreateSeuratObject(counts = Sample.data,  project = SampleName, 
-                           min.cells = 3, min.features = 200)
+
+for (i in 1:length(list_files)) {
+  
+  data.10x[[i]] <- Read10X(data.dir = list_files[i])
+  
+  data.10x[[i]] = CreateSeuratObject(counts = data.10x[[i]], 
+                                     project = list_names[i], 
+                                     min.cells = 3, 
+                                     min.features = 500)
+  
+  print(".. Second scaling done ... ")
+  
+}
+
+#
+names(data.10x) <- list_names
+
+IntegrateListv2 <- function(objlits){
+  
+  SampleNames <- names(objlits) 
+
+  # read DataSet
+  for (i in 1:length(SampleNames)) {
+    objlits[[i]][["DataSet"]] = SampleNames[i];
+  }
+  
+  # merge  using first file as ref
+  objlitsMerge <- merge(x=objlits[[1]], y = objlits[-c(1)], 
+                        add.cell.ids = SampleNames,
+                        project = "miniATLAS",
+                        merge.data = TRUE)
+  
+  return(objlitsMerge)
+}
+
+data.10x <- IntegrateListv2(data.10x)
+
 
 # Normalization v2
-Sample <- SCTransform(Sample, vst.flavor="v2") # vst.flavor="v2"
+data.10x <- SCTransform(data.10x, vst.flavor="v2")
 
 # Variable features
-Sample <- FindVariableFeatures(Sample, selection.method = "vst")
+data.10x <- FindVariableFeatures(data.10x, selection.method = "vst")
+
 # scaling after SCTransform
-Sample <- ScaleData(Sample)
-print(".. Second scaling done ... ")
+data.10x <- ScaleData(data.10x)
 
 # Dimensional reduction
-Sample <- RunPCA(Sample, features = VariableFeatures(object = Sample))
+data.10x <- RunPCA(data.10x, features = VariableFeatures(object = data.10x))
 
 # Non-linear dimensional reduction (UMAP/tSNE)
-Sample <- RunUMAP(Sample,  return.model = TRUE, dims = 1:20,  n_neighbors = 30, min_dist = 0.3, 
-                  umap.method = "umap-learn",  metric = "correlation")
+data.10x <- RunUMAP(data.10x,  return.model = TRUE, dims = 1:20,  
+                    n_neighbors = 30, min_dist = 0.3, 
+                    umap.method = "umap-learn",  metric = "correlation")
 
 # Read Seurat Atlas object
 atlas = readRDS("GSE152766_Root_Atlas.vst2.rds")
@@ -47,17 +82,18 @@ atlas = readRDS("GSE152766_Root_Atlas.vst2.rds")
 ### saveRDS(atlas, file="../4_Velocyto/GSE152766_Root_Atlas.vst2.rds")
 
 # Find anchors
-anchors <- FindTransferAnchors(reference = atlas, query = Sample,
-                               reference.reduction='pca', normalization.method='SCT')
+anchors <- FindTransferAnchors(reference = atlas, query = data.10x,
+                               reference.reduction='pca', 
+                               normalization.method='SCT')
 
 # save anchor objs
-anchorsname = paste0("Seurat_objs/anchors_", SampleNamexx, ".rds")
+anchorsname = paste0("Seurat_objs/anchors_", SampleName, ".rds")
 saveRDS(anchors, file = anchorsname)
 print(".. anchors done ... ")
 
-Sample <- MapQuery(anchorset = anchors, 
+data.10x <- MapQuery(anchorset = anchors, 
                    reference = atlas, 
-                   query = Sample, 
+                   query = data.10x, 
                    refdata = list(celltype.anno = "celltype.anno"),  
                    reference.reduction = "pca", 
                    reduction.model = "umap")
@@ -91,7 +127,7 @@ Labels <- Labels[,-c(1)] # remove bc
 ## transfer UMAP coordenates
 # DimPlot(Sample, reduction = "umap")
 
-Sample <- AddMetaData(object = Sample, metadata = Labels)
+data.10x <- AddMetaData(object = data.10x, metadata = Labels)
 
 
 # set cell type colors
@@ -110,27 +146,27 @@ names(colors_timeAnno) <- as.character(unique(atlas$time.anno))
 
 p1 <- DimPlot(atlas, reduction = "umap", group.by = "celltype.anno", 
               label = TRUE, label.size = 3, repel = TRUE) + 
-        NoLegend() + ggtitle("Atlas Reference") + 
-        scale_color_manual(values=colors_celltype)
+  NoLegend() + ggtitle("Atlas Reference") + 
+  scale_color_manual(values=colors_celltype)
 
-p2 <- DimPlot(Sample, reduction = "ref.umap", group.by = "predicted.celltype.anno", 
+p2 <- DimPlot(data.10x, reduction = "ref.umap", group.by = "predicted.celltype.anno", 
               label = TRUE, label.size = 3, repel = TRUE, raster=FALSE) + 
-      NoLegend() + ggtitle("Query transferred \nUMAP coords & Cell type") +
-      scale_color_manual(values=colors_celltype)
+  NoLegend() + ggtitle("Query transferred \nUMAP coords & Cell type") +
+  scale_color_manual(values=colors_celltype)
 
 p3 <- DimPlot(atlas, reduction = "umap", group.by = "time.anno", 
               label = TRUE, label.size = 3, repel = TRUE) + 
   NoLegend() + ggtitle("Atlas Reference") +
   scale_color_manual(values=colors_timeAnno)
 
-p4 <- DimPlot(Sample, reduction = "ref.umap", group.by = "time.anno", 
+p4 <- DimPlot(data.10x, reduction = "ref.umap", group.by = "time.anno", 
               label = TRUE, label.size = 3, repel = TRUE, raster=FALSE) + 
   NoLegend() +ggtitle("Query transferred \nUMAP coords & time.anno") +
   scale_color_manual(values=colors_timeAnno)
 
 Final_plot <- (p1 + p2)/(p3 + p4)
 
- # 10x8
+# 10x8
 print(".. ploting atlas and labels transterred .. ")
 
 pdfname = paste0("Plot_atlas_And_", SampleName, ".pdf")
@@ -140,12 +176,4 @@ print(Final_plot)
 dev.off() 
 
 filen=paste0("Seurat_objs/", SampleName, ".rds")
-saveRDS(Sample, file = filen)
-
-# Cluster the cells
-# Sample <- FindNeighbors(Sample, dims = 1:15)
-# Sample <- FindClusters(Sample, resolution = 0.5)
-## Plots exploring PCA results ##
-# DimPlot(Sample, reduction = "pca")
-# DimHeatmap(Sample, dims = 1, cells = 500, balanced = TRUE)
-# ElbowPlot(Sample)
+saveRDS(data.10x, file = filen)
