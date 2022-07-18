@@ -25,7 +25,7 @@ import sys
 ####################################################
 
 
-Sample = sys.argv[0]
+Sample = sys.argv[1]
 namebase = "InputFilesScVelo/"+Sample
 
 #Sample = "sc10S10_Endodermis"
@@ -154,7 +154,7 @@ MetaGene.to_csv('scVeloResults/MetaGene_'+Sample+'.txt',
                                        )
 
 # 3. adata obj
-adata.write('scVeloResults/adata'+Sample+'.h5ad')
+adata.write('scVeloResults/adata_'+Sample+'.h5ad')
 
 
 # 4. Velocity field plots
