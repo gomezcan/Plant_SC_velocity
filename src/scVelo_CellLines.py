@@ -22,6 +22,7 @@ import sys
 ## 2. Gene metadata incluting their kinetic parameters
 ## 3. adata.h5ad files 
 ## 4. Velocity field
+## 5. Embeddings and vel vectors
 ####################################################
 
 
@@ -187,3 +188,20 @@ scv.pl.velocity_embedding_grid(adata_f,
                                figsize= (5,5), 
                                save=Sample+'_umap.pdf',
                                fontsize=14)
+
+# 5. Create and save DF with embbeddinds
+df1 = pd.DataFrame(adata_f.obsm["X_Refumap"], columns=['x0_ref', 'y0_ref'])
+df2 = pd.DataFrame(adata_f.obsm["velocity_Refumap"], columns=['x1_ref', 'y1_ref'])
+
+df3 = pd.DataFrame(adata_f.obsm["X_umap"], columns=['x0', 'y0'])
+df4 = pd.DataFrame(adata_f.obsm["velocity_umap"], columns=['x1', 'y1'])
+
+Vel_Embeddings = pd.concat([df1,df2,df3, df4], axis=1)
+
+Vel_Embeddings["Barcode"] = adata_f.obs.index
+
+Vel_Embeddings.to_csv('scVeloResults/Vel_embeddings_'+Sample+'.txt',
+                                        sep='\t', 
+                                        header=True,
+                                        index=False 
+                                       )
