@@ -155,7 +155,7 @@ MetaGene.to_csv('scVeloResults/MetaGene_'+Sample+'.txt',
                                        )
 
 # 3. adata obj
-adata.write('scVeloResults/adata_'+Sample+'.h5ad')
+adata.write('scVeloResults/adata_'+Sample+'.h5ad', compression='gzip')
 
 
 # 4. Velocity field plots
