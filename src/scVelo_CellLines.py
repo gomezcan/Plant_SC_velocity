@@ -16,13 +16,16 @@ import sys
 ####################################################
 ### Description:
 ## read metadata files create from seurat object
-## with "Set_Input_scVelo.R" to calcuate scvelo 
-## velocities. Main outputs:
-## 1. Cell metadata incluting their velocities and pseudo-time
-## 2. Gene metadata incluting their kinetic parameters
-## 3. adata.h5ad files 
-## 4. Velocity field
-## 5. Embeddings and vel vectors
+## with "Set_Input_scVelo.R" to calcuate scVelo velocities
+## Main outputs:
+## 1. Cell metadata incluting their velocities and pseudo-time: 'MetaCell_Sample.txt'
+## 2. Gene metadata incluting their kinetic parameters:         'MetaGene_Sample.txt'
+## 3. adata.h5ad file:                                          'adata_Sample.h5ad'     
+## 4. Plot velocity field:                                      'Sample_umap.pdf'
+## 5. Embeddings and velocities coordenates:                    'Vel_Embeddings_Sample.txt'
+## 6. Gene's velocity vector by cell:                           'VelByCell_Sample.csv'
+## 7. Gene's expression vector by cell:                         'ExpressionByCell_Sample.csv'
+## 8. PAGA-cluster interactions:                                'PAGAinteractions_Sample.csv' 
 ####################################################
 
 
@@ -83,7 +86,28 @@ ldata1.var_names_make_unique()
 # merge matrices into the original adata object
 adata_f = scv.utils.merge(adata, ldata1)
 
-# pre-process
+# Compute a neighborhood graph of observation
+sc.pp.neighbors(adata_f, n_neighbors=4, n_pcs=20)
+sc.tl.draw_graph(adata_f)
+
+# Louvain clustering
+sc.tl.louvain(adata_f, resolution=1.0)
+
+# PAGA graph
+adata_f.uns['neighbors']['distances'] = adata_f.obsp['distances']
+adata_f.uns['neighbors']['connectivities'] = adata_f.obsp['connectivities']
+sc.tl.paga(adata_f, groups='louvain')
+
+# DF with connectivities
+dfpaga = scv.get_df(adata_f, 'paga/connectivities', precision=2).T
+dfpaga["LouvainNode1"] = dfpaga.index
+dfpaga = dfpaga.melt(id_vars=['LouvainNode1'], ignore_index=True)
+
+dfpaga = dfpaga[dfpaga.value > 0]
+dfpaga = dfpaga.rename(columns={"variable":"LouvainNode2"})
+
+
+# pre-process adata for scVelo
 
 # Minimum number of counts (both unspliced and spliced) required for a gene.
 # min_shared_cells : int, optional (default: None) Minimum number of cells 
@@ -102,14 +126,13 @@ scv.tl.velocity_graph(adata_f, n_jobs=50)
 # Speed and coherence
 scv.tl.velocity_confidence(adata_f)
 
-# velocity_pseudotime
+# Velocity_pseudotime
 scv.tl.velocity_pseudotime(adata_f)
 
-# latent time
+# Latent time
 scv.tl.latent_time(adata_f)
 
-# define df with gene counts and Ms values
-
+# Define df with gene counts and Ms values
 gid = adata_f.var.Accession
 gid = gid.reset_index(drop=True)
 
@@ -132,8 +155,10 @@ Counts = pd.concat([gid, spliced, unspliced, Ms, Mu], axis=1)
 #######          save results           #######
 ###############################################
 
-NoSave = ["predicted.celltype.anno.score", "consensus.time.group",
-         "predicted.celltype.anno", "time.anno"]
+NoSave = ["predicted.celltype.anno.score", 
+          "consensus.time.group",
+         "predicted.celltype.anno",
+          "time.anno"]
 
 # 1. MetaCell file
 adata_f.obs.drop(NoSave, axis=1).to_csv('scVeloResults/MetaCell_'+Sample+'.txt',
@@ -205,3 +230,31 @@ Vel_Embeddings.to_csv('scVeloResults/Vel_embeddings_'+Sample+'.txt',
                                         header=True,
                                         index=False 
                                        )
+
+# 6. Save velocity by cell
+velocity = pd.DataFrame(adata_f.layers["velocity"], 
+                            columns=adata_f.var.index)
+
+mask_C = velocity.columns[(velocity.sum(axis=0) != 0)]
+velocity = velocity[mask_C]
+
+velocity["barcode"] = adata_f.obs.barcode.tolist()
+velocity.to_csv('scVeloResults/VelByCell_'+Sample+'.csv',
+                header=True, index=False)
+
+# 7. Save expression by cell
+Expression_Ms = pd.DataFrame(adata_f.layers["Ms"], 
+                        columns=adata_f.var.index)
+
+Expression_Mu = pd.DataFrame(adata_f.layers["Mu"], 
+                        columns=adata_f.var.index)
+
+Expression =  Expression_Ms + Expression_Mu
+
+Expression["barcode"] = adata_f.obs.barcode.tolist()
+Expression.to_csv('scVeloResults/ExpressionByCell_'+Sample+'.csv',
+                header=True, index=False)
+
+# 8. PAGA-cluster interactions
+dfpaga.to_csv('scVeloResults/PAGAinteractions_'+Sample+'.csv',
+                header=True, index=False)
